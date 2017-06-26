@@ -118,8 +118,8 @@ public class AppLabAudioController {
             waveform = AppLabWaveForm (buffer: buffer!,
                                        frm: CGRect (x: (view?.frame.minX)!,
                                                     y: (view?.frame.maxY)!-400,
-                                       width: (view?.frame.width)!,
-                                       height: 400))
+                                                    width: (view?.frame.width)!,
+                                                    height: 400))
             cover = UIView (frame: CGRect (x: (view?.frame.minX)!,
                                            y: (view?.frame.maxY)!-400,
                                            width: (view?.frame.width)!,
@@ -156,7 +156,7 @@ public class AppLabAudioController {
                                      bufferSize: AVAudioFrameCount(size),
                                      format: buffer?.format,
                                      block:{buff, time in
-                    DispatchQueue.main.async {
+                DispatchQueue.main.async {
                     withBlock (buff, (self.buffer?.format.sampleRate)!)
                 }
             })
@@ -312,8 +312,36 @@ public class AppLabAudioController {
         return self
     }
     
-    public func mapBuffers (_ buffers:AVAudioPCMBuffer...) {
+    public static func concatBuffers (_ buffers:AVAudioPCMBuffer...) throws -> AVAudioPCMBuffer {
+        var len:UInt32 = 0
+        for i in buffers {
+            len += i.frameLength
+        }
+        let buf:AVAudioPCMBuffer = AVAudioPCMBuffer (pcmFormat: buffers[0].format, frameCapacity: len)
+        guard var bufp1 = buf.floatChannelData?[0] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        guard var bufp2 = buf.floatChannelData?[1] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
         
+        for i in buffers {
+            guard var bufb1 = i.floatChannelData?[0] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            guard var bufb2 = i.floatChannelData?[1] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            for _ in 0..<i.frameLength {
+                bufp1.pointee = bufb1.pointee
+                bufp2.pointee = bufb1.pointee
+                bufp1 = bufp1.advanced(by: 1)
+                bufp2 = bufp2.advanced(by: 1)
+                bufb1 = bufb1.advanced(by: 1)
+                bufb2 = bufb2.advanced(by: 1)
+            }
+        }
+        return buf
     }
     
     public func play () -> AppLabAudioController {
