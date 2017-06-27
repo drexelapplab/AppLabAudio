@@ -5,11 +5,9 @@ public class AppLabPitchEngine {
     var transformer:YINTransformer
     var estimator:YINEstimator
     public init () {
-        print ("creating Pitch Engine")
+        print ("<creating Pitch Engine>")
         estimator = YINEstimator ()
-        print ("estimator done")
         transformer = YINTransformer ()
-        print ("tranformer done")
     }
     public func pitch (from buff: AVAudioPCMBuffer, withRate rate: Double) {
         let buffer = try? transformer.transform(buffer: buff)

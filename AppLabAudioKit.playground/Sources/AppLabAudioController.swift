@@ -98,13 +98,17 @@ public class AppLabAudioController {
         if source == nil {
             print ("no audio loaded")
         } else {
+            if pitchEngine == nil {
+                pitchEngine = AppLabPitchEngine ()
+            }
             audioPlayer?.installTap (onBus: 0,
-                                     bufferSize: 22050,
+                                     bufferSize: 11025,
                                      format: buffer?.format,
                                      block:{buff, time in
                 DispatchQueue.main.async {
                     self.pitchEngine?.pitch (from: buff,
                         withRate: (self.buffer?.format.sampleRate)!)
+                    
                 }
             })
         }
@@ -148,7 +152,7 @@ public class AppLabAudioController {
         }
     }
     
-    public func tapAudio (withBlock:@escaping (AVAudioPCMBuffer, Double) -> Void, onBufferofSize size: Int) {
+    public func tapAudio (withBlock:@escaping (AVAudioPCMBuffer, Double) -> Void, onChunksOfSize size: Int) {
         if source == nil {
             print ("no audio loaded")
         } else {
@@ -318,6 +322,7 @@ public class AppLabAudioController {
             len += i.frameLength
         }
         let buf:AVAudioPCMBuffer = AVAudioPCMBuffer (pcmFormat: buffers[0].format, frameCapacity: len)
+        buf.frameLength = len
         guard var bufp1 = buf.floatChannelData?[0] else {
             throw SimpleTransformerError.FloatChannelDataIsNil
         }
@@ -334,7 +339,40 @@ public class AppLabAudioController {
             }
             for _ in 0..<i.frameLength {
                 bufp1.pointee = bufb1.pointee
-                bufp2.pointee = bufb1.pointee
+                bufp2.pointee = bufb2.pointee
+                bufp1 = bufp1.advanced(by: 1)
+                bufp2 = bufp2.advanced(by: 1)
+                bufb1 = bufb1.advanced(by: 1)
+                bufb2 = bufb2.advanced(by: 1)
+            }
+        }
+        return buf
+    }
+    
+    public static func concatBuffers (_ buffers:[AVAudioPCMBuffer]) throws -> AVAudioPCMBuffer {
+        var len:UInt32 = 0
+        for i in buffers {
+            len += i.frameLength
+        }
+        let buf:AVAudioPCMBuffer = AVAudioPCMBuffer (pcmFormat: buffers[0].format, frameCapacity: len)
+        buf.frameLength = len
+        guard var bufp1 = buf.floatChannelData?[0] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        guard var bufp2 = buf.floatChannelData?[1] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        
+        for i in buffers {
+            guard var bufb1 = i.floatChannelData?[0] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            guard var bufb2 = i.floatChannelData?[1] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            for _ in 0..<i.frameLength {
+                bufp1.pointee = bufb1.pointee
+                bufp2.pointee = bufb2.pointee
                 bufp1 = bufp1.advanced(by: 1)
                 bufp2 = bufp2.advanced(by: 1)
                 bufb1 = bufb1.advanced(by: 1)
