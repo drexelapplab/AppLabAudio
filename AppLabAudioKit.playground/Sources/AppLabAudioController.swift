@@ -10,6 +10,7 @@ public class AppLabAudioController {
     var noteView: UIView?
     var view: UIView?
     var cover: UIView?
+    
     var source: URL?
     
     var waveform: AppLabWaveForm?
@@ -55,7 +56,7 @@ public class AppLabAudioController {
         }
     }
     
-    public init (_ page: UIView, withAudio audio: String) {
+    public init (_ page: UIView, withSource audio: String) {
         hasPlayed = false
         isPaused = true
         hasWaveForm = false
@@ -146,9 +147,7 @@ public class AppLabAudioController {
             return 0
         } else {
             let nsamples = buffer?.frameLength
-            let time = Double (nsamples!) / (buffer?.format.sampleRate)!
-            print ("song time is: \(time)")
-            return time
+            return Double (nsamples!) / (buffer?.format.sampleRate)!
         }
     }
     
@@ -216,7 +215,7 @@ public class AppLabAudioController {
     }
     
     func loadUI () {
-        
+        //@todo
     }
     
     @objc func playpause () {
@@ -230,11 +229,11 @@ public class AppLabAudioController {
                 audioPlayer?.pause ()
                 self.isPaused = true
             } else if isPaused {
-                let pausedTime: CFTimeInterval = (cover?.layer.timeOffset)!
+                let pausedTime:CFTimeInterval = (cover?.layer.timeOffset)!
                 cover?.layer.speed = 1.0
                 cover?.layer.timeOffset = 0.0
                 cover?.layer.beginTime = 0.0
-                let timeSincePause: CFTimeInterval = (cover?.layer.convertTime (CACurrentMediaTime (), from: nil))! - pausedTime
+                let timeSincePause:CFTimeInterval = (cover?.layer.convertTime (CACurrentMediaTime (), from: nil))! - pausedTime
                 cover?.layer.beginTime = timeSincePause
                 self.isPaused = false
                 audioPlayer?.play ()
@@ -263,7 +262,9 @@ public class AppLabAudioController {
         return self
     }
     
-    public func addBuffer (buf: AVAudioPCMBuffer, withVolume: Float = 1, atTime: Float = 0.0) throws -> AppLabAudioController {
+    public func addBuffer (buf: AVAudioPCMBuffer,
+                           withVolume: Float = 1,
+                           atTime: Float = 0.0) throws -> AppLabAudioController {
         if buffer == nil {
             return self.setBuffer (buf: buf)
         }

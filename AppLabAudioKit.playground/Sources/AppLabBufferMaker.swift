@@ -14,8 +14,8 @@ public class AppLabBufferMaker {
         let format = AVAudioFormat (commonFormat: .pcmFormatFloat32, sampleRate: file.fileFormat.sampleRate, channels: file.fileFormat.channelCount, interleaved: false)
         buffer = AVAudioPCMBuffer (pcmFormat: format, frameCapacity: UInt32 (file.length))
         try! file.read (into: buffer)
-
     }
+    
     public init (fromNote: Note, forTime: Float) throws {
         let pitch = try! Pitch (frequency: fromNote.frequency)
         let frames = Float (format.sampleRate) * forTime
@@ -56,6 +56,7 @@ public class AppLabBufferMaker {
             pointer2 = pointer2.advanced(by: 1)
         }
     }
+    
     public init (fromBuffer: AVAudioPCMBuffer) {
         buffer = fromBuffer
     }

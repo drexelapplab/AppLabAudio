@@ -12,7 +12,8 @@ public class AppLabPitchEngine {
     public func pitch (from buff: AVAudioPCMBuffer, withRate rate: Double) {
         let buffer = try? transformer.transform(buffer: buff)
         if (buffer != nil) {
-            let est = try? estimator.estimateFrequency(sampleRate: Float (rate), buffer: buffer!)
+            let est = try? estimator.estimateFrequency(sampleRate: Float (rate),
+                                                       buffer: buffer!)
             if (est != nil) {
                 let pitch = try? Pitch (frequency: Double (est!))
                 if (pitch != nil) {

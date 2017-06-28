@@ -114,8 +114,7 @@ public class AppLabAudioKit: NSObject, UIPickerViewDelegate, UIPickerViewDataSou
     func getSongTime () -> TimeInterval {
         let nsamples = buffer?.frameLength
         let time = Double (nsamples!) / (buffer?.format.sampleRate)!
-        print ("song time is: \(time)")
-        return time 
+        return time
     }
     
     func play () {
