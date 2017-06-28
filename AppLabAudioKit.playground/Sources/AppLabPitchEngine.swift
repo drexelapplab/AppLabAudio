@@ -2,6 +2,10 @@ import Foundation
 import AVFoundation
 
 public class AppLabPitchEngine {
+    /*
+     this class is meant to guess the most dominant note in the {buf}. 
+     It uses the YIN algorithm. look @ YIN folder for implementation 
+     */
     var transformer:YINTransformer
     var estimator:YINEstimator
     public init () {
