@@ -6,14 +6,13 @@ import AVFoundation
 let view = UIView (frame: CGRect (x: 0, y: 0, width: 700, height: 400))
 PlaygroundPage.current.liveView  = view
 
-//var emajorscale = [try! Pitch (frequency: Note (letter: Note.Letter.E, octave: 3).frequency),    try! Pitch (frequency: Note (letter: Note.Letter.FSharp, octave: 3).frequency), try! Pitch (frequency: Note (letter: Note.Letter.GSharp, octave: 3).frequency), try! Pitch (frequency: Note (letter: Note.Letter.A, octave: 3).frequency),    try! Pitch (frequency: Note (letter: Note.Letter.B, octave: 3).frequency),    try! Pitch (frequency: Note (letter: Note.Letter.CSharp, octave: 4).frequency), try! Pitch (frequency: Note (letter: Note.Letter.DSharp, octave: 4).frequency), try! Pitch (frequency: Note (letter: Note.Letter.E, octave: 4).frequency)]
+var emajorscale = [try! Pitch (frequency: Note (letter: Note.Letter.E, octave: 3).frequency),    try! Pitch (frequency: Note (letter: Note.Letter.FSharp, octave: 3).frequency), try! Pitch (frequency: Note (letter: Note.Letter.GSharp, octave: 3).frequency), try! Pitch (frequency: Note (letter: Note.Letter.A, octave: 3).frequency),    try! Pitch (frequency: Note (letter: Note.Letter.B, octave: 3).frequency),    try! Pitch (frequency: Note (letter: Note.Letter.CSharp, octave: 4).frequency), try! Pitch (frequency: Note (letter: Note.Letter.DSharp, octave: 4).frequency), try! Pitch (frequency: Note (letter: Note.Letter.E, octave: 4).frequency)]
 let controller = AppLabAudioController (view)
-//try! controller.setBuffer(buf: AppLabBufferMaker.concatBuffers(emajorscale.map ({
-//    (try! AppLabBufferMaker (fromPitch: $0, forTime: 0.5)).generate ()
-//})))
-
-//controller.showWaveForm ()
-//controller.showNotes ()
-//controller.play ()
+try! controller.setBuffer(buf: AppLabBufferMaker.concatBuffers(emajorscale.map ({
+    (try! AppLabBufferMaker (fromPitch: $0, forTime: 0.5).transform (attack:0.1, decay: 0.2, sustain:0.5, sustainvol:0.7).generate ())
+})))
+controller.showWaveForm()
+controller.showNotes ()
+controller.play ()
 
 //E, F♯, G♯, A, B, C♯, and D♯.

@@ -46,7 +46,6 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         do {//setup audio settings
             try audioSession?.setCategory (AVAudioSessionCategoryPlayAndRecord)
             try audioSession?.setActive (true)
-            print (audioSession?.recordPermission () == AVAudioSessionRecordPermission.granted)
             //create engine modules
             self.loadEngineModules ()
             //create engine

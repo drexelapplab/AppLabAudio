@@ -176,10 +176,10 @@ public class AppLabBufferMaker {
         return buf
     }
     
-    public func transform (attack:Float  = -1,
-                           decay:Float   = -1,
+    public func transform (attack:Float = -1,
+                           decay:Float = -1,
                            sustain:Float = -1,
-                           sustainvol:Float = -1) throws {
+                           sustainvol:Float = -1) throws -> AppLabBufferMaker {
         /*
          this function is meant to map ADSR envelope onto the buffer. 
          all parameters are treated as percentages of the buffer. 
@@ -216,7 +216,7 @@ public class AppLabBufferMaker {
         if checksum > 1 {
             print ("invalid call to transform")
             print ("checksum > 1")
-            return
+            return self
         }
         guard var bufp1 = buffer.floatChannelData?[0] else {
             throw SimpleTransformerError.FloatChannelDataIsNil
@@ -225,7 +225,7 @@ public class AppLabBufferMaker {
             throw SimpleTransformerError.FloatChannelDataIsNil
         }
         let frames = buffer.frameLength
-        var i = 0
+        var i:UInt32 = 0
         /*
          attack (duration%:Float)
          scales buffer volume up to 100% over the percentage of the buffer provided.
@@ -233,10 +233,10 @@ public class AppLabBufferMaker {
         if attack > 1 {
             print ("invalid call to transform")
             print ("attack > 1")
-            return
+            return self
         } else if attack > 0 {
-            let deltap = (attack * Float (frames))
-            while i < Int (deltap) {
+            let deltap = (Float32 (attack) * Float32 (frames))
+            while i < UInt32 (deltap) {
                 let vol = (Float (i) / deltap)
                 bufp1.pointee = bufp1.pointee * vol
                 bufp2.pointee = bufp2.pointee * vol
@@ -246,20 +246,20 @@ public class AppLabBufferMaker {
             }
         }
         /*
-         decay (duration%:Float))
+         decay (duration%:Float)
          scales down the volume to the sustainvol over the given percentage of the buffer.
          */
         if sustainvol > 0 && sustainvol <= 1 {
             if decay > 1 {
                 print ("invalid call to transform")
                 print ("decay > 1")
-                return
+                return self
             } else if decay > 0 {
-                let deltap = (decay * Float (frames))
+                let deltap = (Float32 (decay) * Float32 (frames))
                 var j = 0
-                let r = sustainvol - 1
-                while j < Int (deltap) {
-                    let vol = 1 + (Float (j) / deltap) * (r)
+                let r = 1 - sustainvol
+                while UInt32 (j) < UInt32 (deltap) {
+                    let vol = 1 - (Float (j) / deltap) * r
                     bufp1.pointee = bufp1.pointee * vol
                     bufp2.pointee = bufp2.pointee * vol
                     bufp1 = bufp1.advanced(by: 1)
@@ -275,11 +275,11 @@ public class AppLabBufferMaker {
             if sustain > 1 {
                 print ("invalid call to transform")
                 print ("sustain > 1")
-                return
+                return self
             } else if sustain > 0 {
-                let deltap = (attack * Float (frames))
+                let deltap = (Float32 (sustain) * Float32 (frames))
                 var j = 0
-                while j < Int (deltap) {
+                while UInt32 (j) < UInt32 (deltap) {
                     bufp1.pointee = bufp1.pointee * sustainvol
                     bufp2.pointee = bufp2.pointee * sustainvol
                     bufp1 = bufp1.advanced(by: 1)
@@ -293,11 +293,14 @@ public class AppLabBufferMaker {
          release (implied)
          drops the volume to 0 from sustainvol over the rest of the buffer.
          */
-        let deltap = Float (frames) - Float (i)
         var j = 0
         let start = sustainvol > 0 && sustainvol <= 1 ? sustainvol : 1
-        while i < Int (frames) {
-            let vol = (start - Float (j) / deltap * start)
+        let deltap = (Float32 (frames) - Float32 (i))
+        print (frames)
+        print (i)
+        print (deltap)
+        while i < frames {
+            let vol = (start - (Float (j) / deltap) * start)
             bufp1.pointee = bufp1.pointee * vol
             bufp2.pointee = bufp2.pointee * vol
             bufp1 = bufp1.advanced(by: 1)
@@ -305,6 +308,9 @@ public class AppLabBufferMaker {
             i += 1
             j += 1
         }
+        print ("b:\(buffer.frameLength)")
+        print ("i:\(i)")
+        return self
     }
     
 //enddef AppLabBufferMaker
