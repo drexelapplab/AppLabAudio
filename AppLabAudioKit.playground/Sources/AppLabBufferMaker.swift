@@ -92,6 +92,221 @@ public class AppLabBufferMaker {
         return buffer
     }
     
+    public static func concatBuffers (_ buffers:AVAudioPCMBuffer...) throws -> AVAudioPCMBuffer {
+        /*
+         this function strings the buffers given together one after the other.
+         the transform is
+         new_buffer = buffers.flatten ()
+         */
+        var len:UInt32 = 0
+        for i in buffers {
+            len += i.frameLength
+        }
+        //create final buffer
+        let buf:AVAudioPCMBuffer = AVAudioPCMBuffer (pcmFormat: buffers[0].format, frameCapacity: len)
+        buf.frameLength = len
+        //setup pointers to final buffer
+        guard var bufp1 = buf.floatChannelData?[0] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        guard var bufp2 = buf.floatChannelData?[1] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        //look through given buffers
+        for i in buffers {
+            //setup pointers to buffers[i]
+            guard var bufb1 = i.floatChannelData?[0] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            guard var bufb2 = i.floatChannelData?[1] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            //map buffers[i] to it's position on the new buffer
+            for _ in 0..<i.frameLength {
+                bufp1.pointee = bufb1.pointee
+                bufp2.pointee = bufb2.pointee
+                bufp1 = bufp1.advanced(by: 1)
+                bufp2 = bufp2.advanced(by: 1)
+                bufb1 = bufb1.advanced(by: 1)
+                bufb2 = bufb2.advanced(by: 1)
+            }
+        }
+        return buf
+    }
     
+    public static func concatBuffers (_ buffers:[AVAudioPCMBuffer]) throws -> AVAudioPCMBuffer {
+        /*
+         this function strings the buffers given together one after the other.
+         the transform is
+         new_buffer = buffers.flatten ()
+         */
+        var len:UInt32 = 0
+        for i in buffers {
+            len += i.frameLength
+        }
+        //create final buffer
+        let buf:AVAudioPCMBuffer = AVAudioPCMBuffer (pcmFormat: buffers[0].format, frameCapacity: len)
+        buf.frameLength = len
+        //setup pointers to new buffer
+        guard var bufp1 = buf.floatChannelData?[0] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        guard var bufp2 = buf.floatChannelData?[1] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        //look through buffers
+        for i in buffers {
+            //setup pointers to buffers[i]
+            guard var bufb1 = i.floatChannelData?[0] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            guard var bufb2 = i.floatChannelData?[1] else {
+                throw SimpleTransformerError.FloatChannelDataIsNil
+            }
+            //map buffers[i] to its position in the new buffer
+            for _ in 0..<i.frameLength {
+                bufp1.pointee = bufb1.pointee
+                bufp2.pointee = bufb2.pointee
+                bufp1 = bufp1.advanced(by: 1)
+                bufp2 = bufp2.advanced(by: 1)
+                bufb1 = bufb1.advanced(by: 1)
+                bufb2 = bufb2.advanced(by: 1)
+            }
+        }
+        return buf
+    }
+    
+    public func transform (attack:Float  = -1,
+                           decay:Float   = -1,
+                           sustain:Float = -1,
+                           sustainlvl:Float = -1) throws {
+        /*
+         this function is meant to map ADSR envelope onto the buffer. 
+         all parameters are treated as percentages of the buffer. 
+         sustainlvl is the volume help during sustain step. 
+         if sustainlvl is nil or 0 then decay/sustain steps are skipped because it will end up being equal to the release stage.
+         https://en.wikipedia.org/wiki/Synthesizer#/media/File:ADSR_parameter.svg
+         release is assumed to be (1 - attack - decay - sustain) percentage.
+         -transform (attack, decay, sustain) :- parameters are in percentage of buffer.
+         |------attack-----|-decay-|---sustain---|-release-|
+         |                 |       |             |         |
+         |                /|\      |             |         |
+         |               / | \     |             |         |
+         |              /  |  \    |             |         |
+         |             /   |   \   |             |         |
+         |            /    |    \  |             |         |
+         |           /     |     \ |             |         |
+         |          /      |      \|             |         |
+         |         /       |       |-------------|         |
+         |        /        |       |             |\        |
+         |       /         |       |             | \       |
+         |      /          |       |             |  \      |
+         |     /           |       |             |   \     |
+         |    /            |       |             |    \    |
+         |   /             |       |             |     \   |
+         |  /              |       |             |      \  |
+         | /               |       |             |       \ |
+         |/                |       |             |        \|
+         |-----------------|-------|-------------|---------|
+         */
+        //bounds checking to ensure no errors 
+        let checksum = (attack  > 0 ? attack  : 0) +
+                       (decay   > 0 ? decay   : 0) +
+                       (sustain > 0 ? sustain : 0)
+        if checksum > 1 {
+            print ("invalid call to transform")
+            print ("checksum > 1")
+            return
+        }
+        guard var bufp1 = buffer.floatChannelData?[0] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        guard var bufp2 = buffer.floatChannelData?[1] else {
+            throw SimpleTransformerError.FloatChannelDataIsNil
+        }
+        let frames = buffer.frameLength
+        var i = 0
+        /*
+         attack (duration%:Float)
+         scales buffer volume up to 100% over the percentage of the buffer provided.
+         */
+        if attack > 1 {
+            print ("invalid call to transform")
+            print ("attack > 1")
+            return
+        } else if attack > 0 {
+            let deltap = (attack * Float (frames))
+            while i < Int (deltap) {
+                let vol = (Float (i) / deltap)
+                bufp1.pointee = bufp1.pointee * vol
+                bufp2.pointee = bufp2.pointee * vol
+                bufp1 = bufp1.advanced(by: 1)
+                bufp2 = bufp2.advanced(by: 1)
+                i += 1
+            }
+        }
+        /*
+         decay (duration%:Float))
+         scales down the volume to the sustainlvl over the given percentage of the buffer.
+         */
+        if sustainlvl > 0 && sustainlvl <= 1 {
+            if decay > 1 {
+                print ("invalid call to transform")
+                print ("decay > 1")
+                return
+            } else if decay > 0 {
+                let deltap = (decay * Float (frames))
+                var j = 0
+                let r = sustainlvl - 1
+                while j < Int (deltap) {
+                    let vol = 1 + (Float (j) / deltap) * (r)
+                    bufp1.pointee = bufp1.pointee * vol
+                    bufp2.pointee = bufp2.pointee * vol
+                    bufp1 = bufp1.advanced(by: 1)
+                    bufp2 = bufp2.advanced(by: 1)
+                    i += 1
+                    j += 1
+                }
+            }
+            /*
+             sustain (duration%:Float)
+             maps sustain volume over the provided percentage of the buffer
+             */
+            if sustain > 1 {
+                print ("invalid call to transform")
+                print ("sustain > 1")
+                return
+            } else if sustain > 0 {
+                let deltap = (attack * Float (frames))
+                var j = 0
+                while j < Int (deltap) {
+                    bufp1.pointee = bufp1.pointee * sustainlvl
+                    bufp2.pointee = bufp2.pointee * sustainlvl
+                    bufp1 = bufp1.advanced(by: 1)
+                    bufp2 = bufp2.advanced(by: 1)
+                    i += 1
+                    j += 1
+                }
+            }
+        }
+        /*
+         release (implied)
+         drops the volume to 0 from sustainlvl over the rest of the buffer.
+         */
+        let deltap = Float (frames) - Float (i)
+        var j = 0
+        let start = sustainlvl > 0 && sustainlvl <= 1 ? sustainlvl : 1
+        while i < Int (frames) {
+            let vol = (start - Float (j) / deltap * start)
+            bufp1.pointee = bufp1.pointee * vol
+            bufp2.pointee = bufp2.pointee * vol
+            bufp1 = bufp1.advanced(by: 1)
+            bufp2 = bufp2.advanced(by: 1)
+            i += 1
+            j += 1
+        }
+    }
+    
+//end def AppLabBufferMaker
 }
 

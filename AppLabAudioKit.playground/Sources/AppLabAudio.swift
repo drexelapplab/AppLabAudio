@@ -2,7 +2,6 @@ import UIKit
 import AVFoundation
 import AudioUnit
 import CoreAudioKit
-import XCPlayground
 import PlaygroundSupport
 
 public class AppLabAudioKit: NSObject, UIPickerViewDelegate, UIPickerViewDataSource {
@@ -20,6 +19,7 @@ public class AppLabAudioKit: NSObject, UIPickerViewDelegate, UIPickerViewDataSou
     var waveform:AppLabWaveForm?
     
     var audioSession:AVAudioSession?
+    var recorder:AVAudioRecorder?
     var sampler:AVAudioUnitSampler?
     var distortion:AVAudioUnitDistortion?
     var reverb:AVAudioUnitReverb?
@@ -194,12 +194,16 @@ public class AppLabAudioKit: NSObject, UIPickerViewDelegate, UIPickerViewDataSou
     public func pickerView (_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         return pickerData.count
     }
+    
     public func numberOfComponentsInPickerView (pickerView: UIPickerView) -> Int {
         return 1
     }
+    
     public func pickerView (_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         return pickerData[row]
     }
+    
+    
 }
 
 

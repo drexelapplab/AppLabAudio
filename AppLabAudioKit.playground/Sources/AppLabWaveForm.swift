@@ -2,7 +2,6 @@ import UIKit
 import AVFoundation
 import AudioUnit
 import CoreAudioKit
-import XCPlayground
 import PlaygroundSupport
 import Accelerate
 

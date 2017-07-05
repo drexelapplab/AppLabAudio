@@ -2,10 +2,9 @@ import UIKit
 import AVFoundation
 import AudioUnit
 import CoreAudioKit
-import XCPlayground
 import PlaygroundSupport
 
-public class AppLabAudioController {
+public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     //visual elements section
     var playButton: UIView?
     var noteView: UIView?
@@ -13,11 +12,13 @@ public class AppLabAudioController {
     var cover: UIView?
     //audio source|also used as flag for audio init
     var source: URL?
+    var recorded: URL?
     //engines and other applab classes
     var waveform: AppLabWaveForm?
     var pitchEngine: AppLabPitchEngine?
     //apple's audio engine modules
     var audioSession:AVAudioSession?
+    var recorder:AVAudioRecorder?
     var sampler:AVAudioUnitSampler?
     var distorter:AVAudioUnitDistortion?
     var reverber:AVAudioUnitReverb?
@@ -41,9 +42,11 @@ public class AppLabAudioController {
         audioSession = AVAudioSession.sharedInstance ()
         view = page
         source = nil
+        super.init ()
         do {//setup audio settings
             try audioSession?.setCategory (AVAudioSessionCategoryPlayAndRecord)
             try audioSession?.setActive (true)
+            print (audioSession?.recordPermission () == AVAudioSessionRecordPermission.granted)
             //create engine modules
             self.loadEngineModules ()
             //create engine
@@ -71,6 +74,7 @@ public class AppLabAudioController {
         audioSession = AVAudioSession.sharedInstance ()
         view = page
         source = Bundle.main.url (forResource: audio, withExtension: ".m4a")
+        super.init ()
         do {//setup audio settings
             try audioSession?.setCategory (AVAudioSessionCategoryPlayAndRecord)
             try audioSession?.setActive (true)
@@ -100,7 +104,7 @@ public class AppLabAudioController {
         }
     }
     
-    public func loadAudio (_ audio: String) -> AppLabAudioController {
+    public func loadAudio (_ audio: String) {
         /*
          this function attempts to load the file with the name {audio} into the buffer. 
          it will crash if the function is not inside the buffer.
@@ -110,10 +114,9 @@ public class AppLabAudioController {
         let format = AVAudioFormat (commonFormat: .pcmFormatFloat32, sampleRate: file.fileFormat.sampleRate, channels: file.fileFormat.channelCount, interleaved: false)
         buffer = AVAudioPCMBuffer (pcmFormat: format, frameCapacity: UInt32 (file.length))
         try! file.read (into: buffer!)
-        return self
     }
     
-    public func showNotes () -> AppLabAudioController {
+    public func showNotes () {
         /*
          this function will install the PitchEngine onto the buffer.
         */
@@ -134,10 +137,9 @@ public class AppLabAudioController {
                 }
             })
         }
-        return self
     }
     
-    public func showWaveForm () -> AppLabAudioController {
+    public func showWaveForm () {
         /*
          this function will setup the AppLabWaveForm to display the current buffer. 
          It will also setup the cover UIView which is used in animating during playback.
@@ -164,7 +166,6 @@ public class AppLabAudioController {
             view?.bringSubview (toFront: cover!)
         }
         hasWaveForm = true
-        return self
     }
     
     func getAudioTime () -> TimeInterval {
@@ -200,7 +201,7 @@ public class AppLabAudioController {
         }
     }
     
-    public func add (distortion: Float) -> AppLabAudioController {
+    public func add (distortion: Float) {
         /*
          adds distortion to the engine
         */
@@ -209,10 +210,9 @@ public class AppLabAudioController {
         } else {
             self.distorter?.wetDryMix = distortion
         }
-        return self
     }
     
-    public func add (reverb: Float) -> AppLabAudioController {
+    public func add (reverb: Float) {
         /*
          adds reverb to the engine
          */
@@ -222,19 +222,17 @@ public class AppLabAudioController {
         } else {
             self.reverber?.wetDryMix = reverb
         }
-        return self
     }
     
-    public func add (timeScale: Float) -> AppLabAudioController {
+    public func add (timeScale: Float) {
         /*
-         changes the rate at which the output buffer is played at.
+         changes the rate of the output buffer.
          */
         if source == nil {
             print ("no audio loaded")
         } else {
             self.audioPlayer?.rate = timeScale
         }
-        return self
     }
     
     func loadEngineModules () {
@@ -327,27 +325,26 @@ public class AppLabAudioController {
         }
     }
     
-    public func setBuffer (buf: AVAudioPCMBuffer) -> AppLabAudioController {
+    public func setBuffer (buf: AVAudioPCMBuffer) {
         /*
         this funtion sets an external buffer to the internal one. 
          flags the install as manually generated.
         */
         self.buffer = buf
         self.source = URL (string: "manual")
-        return self
     }
     
     public func addBuffer (buf: AVAudioPCMBuffer,
                            withVolume: Float = 1,
-                           atTime: Float = 0.0) throws -> AppLabAudioController {
+                           atTime: Float = 0.0) throws {
         /*
          this function adds an external buffer to the current buffer. 
          the transform is 
-         new_buffer = old_buffer + new_buffer * volume 
+         new_buffer = old_buffer + inc_buffer * volume
          flags the install as manually generated.
         */
         if buffer == nil {
-            return self.setBuffer (buf: buf)
+            self.setBuffer (buf: buf)
         }
         //creater buffer
         let delay = atTime * 44100.0
@@ -395,100 +392,97 @@ public class AppLabAudioController {
         //finalize the add
         self.source = URL (string: "manual")
         buffer = finbuf
-        return self
     }
     
-    public static func concatBuffers (_ buffers:AVAudioPCMBuffer...) throws -> AVAudioPCMBuffer {
-        /*
-         this function strings the buffers given together one after the other. 
-         the transform is 
-         new_buffer = buffers.flatten ()
-        */
-        var len:UInt32 = 0
-        for i in buffers {
-            len += i.frameLength
-        }
-        //create final buffer
-        let buf:AVAudioPCMBuffer = AVAudioPCMBuffer (pcmFormat: buffers[0].format, frameCapacity: len)
-        buf.frameLength = len
-        //setup pointers to final buffer
-        guard var bufp1 = buf.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
-        }
-        guard var bufp2 = buf.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
-        }
-        //look through given buffers
-        for i in buffers {
-            //setup pointers to buffers[i]
-            guard var bufb1 = i.floatChannelData?[0] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
-            }
-            guard var bufb2 = i.floatChannelData?[1] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
-            }
-            //map buffers[i] to it's position on the new buffer
-            for _ in 0..<i.frameLength {
-                bufp1.pointee = bufb1.pointee
-                bufp2.pointee = bufb2.pointee
-                bufp1 = bufp1.advanced(by: 1)
-                bufp2 = bufp2.advanced(by: 1)
-                bufb1 = bufb1.advanced(by: 1)
-                bufb2 = bufb2.advanced(by: 1)
-            }
-        }
-        return buf
-    }
     
-    public static func concatBuffers (_ buffers:[AVAudioPCMBuffer]) throws -> AVAudioPCMBuffer {
-        /*
-         this function strings the buffers given together one after the other.
-         the transform is
-         new_buffer = buffers.flatten ()
-         */
-        var len:UInt32 = 0
-        for i in buffers {
-            len += i.frameLength
-        }
-        //create final buffer
-        let buf:AVAudioPCMBuffer = AVAudioPCMBuffer (pcmFormat: buffers[0].format, frameCapacity: len)
-        buf.frameLength = len
-        //setup pointers to new buffer
-        guard var bufp1 = buf.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
-        }
-        guard var bufp2 = buf.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
-        }
-        //look through buffers
-        for i in buffers {
-            //setup pointers to buffers[i]
-            guard var bufb1 = i.floatChannelData?[0] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
-            }
-            guard var bufb2 = i.floatChannelData?[1] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
-            }
-            //map buffers[i] to its position in the new buffer
-            for _ in 0..<i.frameLength {
-                bufp1.pointee = bufb1.pointee
-                bufp2.pointee = bufb2.pointee
-                bufp1 = bufp1.advanced(by: 1)
-                bufp2 = bufp2.advanced(by: 1)
-                bufb1 = bufb1.advanced(by: 1)
-                bufb2 = bufb2.advanced(by: 1)
-            }
-        }
-        return buf
-    }
-    
-    public func play () -> AppLabAudioController {
+    public func play () {
         /*
          public function to toggle play/pause
         */
         self.playpause ()
         print ("<playing music>")
-        return self
     }
+   /****************              <-depreciated->              ***************/
+//    var capture: AVCaptureSession?
+//    var device: AVCaptureDevice?
+//    var input: AVCaptureDeviceInput?
+//    var output: AVCaptureAudioDataOutput?
+//    public func openCameraFunctionality () {
+//        capture = AVCaptureSession ()
+//        device = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo)
+//        print (device)
+//        input = try! AVCaptureDeviceInput (device: device!)
+//        output = AVCaptureAudioDataOutput ()
+//        capture?.addInput(input!)
+//        capture?.addOutput(output!)
+//        capture?.startRunning()
+//        print (capture?.isRunning ?? false)
+//        playButton = UIView (frame: CGRect (x: 50.0,
+//                                            y: 50.0,
+//                                            width: 50.0, height: 50.0))
+//        let tap = UITapGestureRecognizer (target: self, action: #selector (self.stoprecord))
+//        playButton?.backgroundColor = UIColor.green
+//                playButton?.addGestureRecognizer(tap)
+//                view?.addSubview(playButton!)
+//    }
+//    
+//    @objc public func stoprecord () {
+//        capture?.stopRunning ()
+//        print ("stopped recording")
+//    }
+//    
+//    public func openRecordFunctionality () {
+//        playButton = UIView (frame: CGRect (x: 50.0,
+//                                            y: 50.0,
+//                                            width: 50.0, height: 50.0))
+//        let tap = UITapGestureRecognizer (target: self, action: #selector (self.record))
+//        playButton?.backgroundColor = UIColor.green
+//        playButton?.addGestureRecognizer(tap)
+//        view?.addSubview(playButton!)
+//    }
+//    
+//    @objc public func record () {
+//        /*
+//         this function is depreciated. 
+//         audio recording does not work in playgrounds.
+//        */
+//        recorded = Bundle.main.resourceURL?.appendingPathComponent("audio.m4a")
+//        let settings:[String : Any] = [AVFormatIDKey:kAudioFormatAppleLossless,
+//                                        AVSampleRateKey:44100.0,
+//                                        AVNumberOfChannelsKey:1,
+//                                        AVEncoderBitRateKey:320000,
+//                                        AVLinearPCMBitDepthKey:16,
+//                                        AVEncoderAudioQualityKey:AVAudioQuality.max.rawValue]
+//        print ((recorded?.absoluteString)!)
+//        print (FileManager.default.fileExists(atPath: (recorded?.absoluteString)!))
+//        try! audioSession?.setActive(true)
+//        recorder = try! AVAudioRecorder (url: recorded!, settings:settings)
+//        recorder?.delegate = self
+//        recorder?.isMeteringEnabled = true
+//        print ("recorder created")
+//        recorder?.prepareToRecord ()
+//        print ("attempting to record")
+//        recorder?.record()
+//        playButton?.backgroundColor = UIColor.red
+//        playButton?.removeGestureRecognizer((playButton?.gestureRecognizers?[0])!)
+//        let tap = UITapGestureRecognizer (target: self, action: #selector (self.stopRecord))
+//        playButton?.addGestureRecognizer(tap)
+//        print ("<recorder status: \((recorder?.isRecording)!)>")
+//    }
+//    
+//    @objc public func stopRecord () {
+//        /*
+//         this function is depreciated.
+//         audio recording does not work in playgrounds.
+//        */
+//        if (recorder != nil) {
+//            recorder?.stop ()
+//            recorder = nil
+//            print ("<recorder has stopped>")
+//            //loadAudio("audio")
+//            //playpause()
+//        }
+//    }
+    
     
 }
