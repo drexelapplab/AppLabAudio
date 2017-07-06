@@ -2,7 +2,7 @@ import Foundation
 import AVFoundation
 
 public class AppLabBufferMaker {
-    enum SimpleTransformerError: Error {
+    enum BufferErrors: Error {
         case FloatChannelDataIsNil
     }
     //variables needed to make buffer
@@ -32,10 +32,10 @@ public class AppLabBufferMaker {
         buffer.frameLength = AVAudioFrameCount (frames)
         //setup buffer pointers
         guard var channel0 = buffer.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         guard var channel1 = buffer.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         let sr:Float = 44100.0
         //map each generated datapoint into the new buffer
@@ -60,10 +60,10 @@ public class AppLabBufferMaker {
         buffer.frameLength = AVAudioFrameCount (frames)
         //setup buffer pointers
         guard var channel0 = buffer.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         guard var channel1 = buffer.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         let sr:Float = 44100.0
         //map each generated datapoint into the new buffer
@@ -107,19 +107,19 @@ public class AppLabBufferMaker {
         buf.frameLength = len
         //setup pointers to final buffer
         guard var bufp1 = buf.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         guard var bufp2 = buf.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         //look through given buffers
         for i in buffers {
             //setup pointers to buffers[i]
             guard var bufb1 = i.floatChannelData?[0] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
+                throw BufferErrors.FloatChannelDataIsNil
             }
             guard var bufb2 = i.floatChannelData?[1] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
+                throw BufferErrors.FloatChannelDataIsNil
             }
             //map buffers[i] to it's position on the new buffer
             for _ in 0..<i.frameLength {
@@ -149,19 +149,19 @@ public class AppLabBufferMaker {
         buf.frameLength = len
         //setup pointers to new buffer
         guard var bufp1 = buf.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         guard var bufp2 = buf.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         //look through buffers
         for i in buffers {
             //setup pointers to buffers[i]
             guard var bufb1 = i.floatChannelData?[0] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
+                throw BufferErrors.FloatChannelDataIsNil
             }
             guard var bufb2 = i.floatChannelData?[1] else {
-                throw SimpleTransformerError.FloatChannelDataIsNil
+                throw BufferErrors.FloatChannelDataIsNil
             }
             //map buffers[i] to its position in the new buffer
             for _ in 0..<i.frameLength {
@@ -219,10 +219,10 @@ public class AppLabBufferMaker {
             return self
         }
         guard var bufp1 = buffer.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         guard var bufp2 = buffer.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw BufferErrors.FloatChannelDataIsNil
         }
         let frames = buffer.frameLength
         var i:UInt32 = 0

@@ -30,7 +30,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     var hasPlayed:Bool
     var hasWaveForm:Bool
     //errors
-    enum SimpleTransformerError: Error {
+    enum AppLabAudioControllerErrors: Error {
         case FloatChannelDataIsNil
     }
     //least intensive init, needs audio source to still be set before it can do anything
@@ -354,22 +354,22 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         finbuf.frameLength = newtime
         //create pointers
         guard var bufp = buffer?.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw AppLabAudioControllerErrors.FloatChannelDataIsNil
         }
         guard var incbufp = buf.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw AppLabAudioControllerErrors.FloatChannelDataIsNil
         }
         guard var finbufp = finbuf.floatChannelData?[0] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw AppLabAudioControllerErrors.FloatChannelDataIsNil
         }
         guard var bufp1 = buffer?.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw AppLabAudioControllerErrors.FloatChannelDataIsNil
         }
         guard var incbufp1 = buf.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw AppLabAudioControllerErrors.FloatChannelDataIsNil
         }
         guard var finbufp1 = finbuf.floatChannelData?[1] else {
-            throw SimpleTransformerError.FloatChannelDataIsNil
+            throw AppLabAudioControllerErrors.FloatChannelDataIsNil
         }
         //map old buffer and new buffer together
         for i in 0..<Int32 (finbuf.frameLength) {
