@@ -17,6 +17,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     var waveform: AppLabWaveForm?
     var pitchEngine: AppLabPitchEngine?
     //apple's audio engine modules
+    var timePitcher:AVAudioUnitTimePitch?
     var audioSession:AVAudioSession?
     var recorder:AVAudioRecorder?
     var sampler:AVAudioUnitSampler?
@@ -55,6 +56,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
             engine?.attach (distorter!)
             engine?.attach (reverber!)
             engine?.attach (audioPlayer!)
+            engine?.attach(timePitcher!)
             //create connects internal to the engine
             self.connectEngineModules ()
             
@@ -244,6 +246,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         sampler = AVAudioUnitSampler ()
         distorter = AVAudioUnitDistortion ()
         reverber = AVAudioUnitReverb ()
+        timePitcher = AVAudioUnitTimePitch ()
         buffer = nil
     }
     
@@ -253,10 +256,14 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
          -------------------------------ENGINE-------------------------------
          *                                                                  *
          *         audioBuffer------->audioPlayer                           *
-         *                               /                                  *
-         *                              /            Sampler                *
-         *                             /                |                   *
-         *                            /                 |                   *
+         *                                 |                                *
+         *                                 |                                *
+         *                                 |                                *
+         *                            TimePitcher                           *
+         *                                /                                 *
+         *                               /            Sampler               *
+         *                              /                |                  *
+         *                             /                 |                  *
          *                      Reverber----Distorter------->ouput          *
          *                                                                  *
          --------------------------------------------------------------------
@@ -267,6 +274,8 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         let pformat = buffer?.format
         engine?.connect (audioPlayer!, to: reverber!, format: pformat)
         engine?.connect (reverber!, to: node!, fromBus: 0, toBus: 0, format: pformat)
+        engine?.connect(audioPlayer!, to: timePitcher!, format: pformat)
+        engine?.connect(timePitcher!, to: (engine?.outputNode)!, format: pformat)
         engine?.connect (distorter!, to: node!, fromBus: 0, toBus: 2, format: format)
         let dNodes = [AVAudioConnectionPoint (node: (engine?.mainMixerNode)!, bus:1),
                       AVAudioConnectionPoint (node:distorter!, bus:0)]
@@ -334,7 +343,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     }
     
     public func addBuffer (buf: AVAudioPCMBuffer,
-                           withVolume: Float = 1,
+                           withVolume: Float = 0.5,
                            atTime: Float = 0.0) throws {
         /*
          this function adds an external buffer to the current buffer. 
@@ -392,6 +401,9 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         self.source = URL (string: "manual")
         buffer = finbuf
     }
+    public func tester () {
+        self.timePitcher?.pitch = 140.0
+    }
     
     
     public func play () {
@@ -399,6 +411,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
          public function to toggle play/pause
         */
         self.playpause ()
+        //
         print ("<playing music>")
     }
    /****************              <-depreciated->              ***************/

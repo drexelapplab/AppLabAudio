@@ -39,9 +39,11 @@ public class AppLabBufferMaker {
         }
         let sr:Float = 44100.0
         //map each generated datapoint into the new buffer
+        let displacement = Float (arc4random_uniform(44100))
         for i in 0..<Int (buffer.frameLength) {
             // (frequency * i * PI * 2) / framerate
-            let t = Float (pitch.frequency) * Float(i) * 2 * Float(M_PI) / sr
+            
+            let t = (displacement + Float (pitch.frequency) * Float(i) * 2 * Float(M_PI)) / sr
             channel0.pointee = (sinf (t))
             channel0 = channel0.advanced(by: 1)
             channel1.pointee = (sinf (t))
@@ -67,9 +69,10 @@ public class AppLabBufferMaker {
         }
         let sr:Float = 44100.0
         //map each generated datapoint into the new buffer
+        let displacement = Float (arc4random_uniform(44100))
         for i in 0..<Int (buffer.frameLength) {
             // (frequency * i * PI * 2) / framerate
-            let t = Float (fromPitch.frequency) * Float(i) * 2 * Float(M_PI) / sr
+            let t = (displacement + Float (fromPitch.frequency) * Float(i) * 2 * Float(M_PI)) / sr
             channel0.pointee = (sinf (t))
             channel0 = channel0.advanced(by: 1)
             channel1.pointee = (sinf (t))
@@ -296,9 +299,6 @@ public class AppLabBufferMaker {
         var j = 0
         let start = sustainvol > 0 && sustainvol <= 1 ? sustainvol : 1
         let deltap = (Float32 (frames) - Float32 (i))
-        print (frames)
-        print (i)
-        print (deltap)
         while i < frames {
             let vol = (start - (Float (j) / deltap) * start)
             bufp1.pointee = bufp1.pointee * vol
@@ -308,8 +308,6 @@ public class AppLabBufferMaker {
             i += 1
             j += 1
         }
-        print ("b:\(buffer.frameLength)")
-        print ("i:\(i)")
         return self
     }
     
