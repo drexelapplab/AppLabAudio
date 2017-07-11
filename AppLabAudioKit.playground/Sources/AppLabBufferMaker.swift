@@ -311,6 +311,25 @@ public class AppLabBufferMaker {
         return self
     }
     
+    func mapEnvelope (_ envelopePoints: [Float]) throws {
+        guard var bufp1 = buffer.floatChannelData?[0] else {
+            throw BufferErrors.FloatChannelDataIsNil
+        }
+        guard var bufp2 = buffer.floatChannelData?[1] else {
+            throw BufferErrors.FloatChannelDataIsNil
+        }
+        for i in 0...envelopePoints.count-2 {
+            let delta = (Int32 (self.buffer.frameLength)/Int32 (envelopePoints.count-1))
+            for j in 0..<delta {
+                let vol = envelopePoints[i] + (envelopePoints[i+1] - envelopePoints[i]) * (Float (j) / Float (delta))
+                bufp1.pointee = bufp1.pointee * vol
+                bufp2.pointee = bufp2.pointee * vol
+                bufp1 = bufp1.advanced(by: 1)
+                bufp2 = bufp2.advanced(by: 1)
+            }
+        }
+    }
+    
 //enddef AppLabBufferMaker
 }
 
