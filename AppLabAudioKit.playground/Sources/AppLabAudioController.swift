@@ -16,6 +16,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     //engines and other applab classes
     var waveform: AppLabWaveForm?
     var pitchEngine: AppLabPitchEngine?
+    var envelope: EnvelopeDrawer?
     //apple's audio engine modules
     var timePitcher:AVAudioUnitTimePitch?
     var audioSession:AVAudioSession?
@@ -30,6 +31,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     var isPaused:Bool
     var hasPlayed:Bool
     var hasWaveForm:Bool
+    var hasDrawnEnvelope:Bool
     //errors
     enum AppLabAudioControllerErrors: Error {
         case FloatChannelDataIsNil
@@ -39,6 +41,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         hasPlayed = false
         isPaused = true
         hasWaveForm = false
+        hasDrawnEnvelope = false
         PlaygroundPage.current.needsIndefiniteExecution = true//allow threading
         audioSession = AVAudioSession.sharedInstance ()
         view = page
@@ -71,6 +74,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         hasPlayed = false
         isPaused = true
         hasWaveForm = false
+        hasDrawnEnvelope = false
         PlaygroundPage.current.needsIndefiniteExecution = true
         audioSession = AVAudioSession.sharedInstance ()
         view = page
@@ -312,7 +316,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
                 audioPlayer?.play ()
             }
         } else {
-            if hasWaveForm {
+            if hasWaveForm || hasDrawnEnvelope {
                 //create waveform if requested
                 UIView.animate (withDuration: getAudioTime (), delay: 0.0, options: [.curveLinear], animations: {
                     self.cover?.frame = CGRect (x: (self.view?.frame.maxX)!,
@@ -322,12 +326,16 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
                 })
             }
             //starts the engine
-            try! engine?.start()
+            if !(engine?.isRunning)! {
+                try! engine?.start ()
+                engine?.prepare ()
+                
+            }
             //prepare and play the engine and audioplayer
-            engine?.prepare ()
+            
+            //set the buffer to be played
             audioPlayer?.prepare (withFrameCount: (buffer?.frameLength)!)
             audioPlayer?.play ()
-            //set the buffer to be played
             audioPlayer?.scheduleBuffer (buffer!, at: nil, completionHandler: nil)
             hasPlayed = true
         }
@@ -401,7 +409,8 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         self.source = URL (string: "manual")
         buffer = finbuf
     }
-    public func tester () {
+    
+    public func pitchtester () {
         self.timePitcher?.pitch = 140.0
     }
     
@@ -414,6 +423,52 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         //
         print ("<playing music>")
     }
+    
+    public func setEnvelopeDrawer (_ d: EnvelopeDrawer) {
+        self.envelope = d
+        hasDrawnEnvelope = true
+        playButton = UIView (frame: CGRect (x: (view?.frame.maxX)!-50,
+                                            y: (view?.frame.minY)!,
+                                            width: CGFloat (50),
+                                            height: CGFloat (50)))
+        playButton?.backgroundColor = UIColor.white
+        let tp = UITapGestureRecognizer (target: self, action: #selector (self.playfromEnvelope))
+        playButton?.addGestureRecognizer(tp)
+        view?.addSubview (playButton!)
+        view?.bringSubview (toFront: playButton!)
+    }
+    
+    @objc func playfromEnvelope () {
+        if (self.audioPlayer?.isPlaying)! {
+            self.audioPlayer?.stop ()
+            hasPlayed = false
+        }
+        if hasDrawnEnvelope {
+            let b = AppLabBufferMaker (fromBuffer: self.buffer!)
+            try! b.mapEnvelope ((self.envelope?.envelope ())!)
+            self.buffer = b.generate ()
+            source = URL (string: "manual")
+            if cover == nil && !(self.audioPlayer?.isPlaying)! {
+                cover?.removeFromSuperview ()
+                cover = nil
+            }
+            cover = UIView (frame: CGRect (x: (view?.frame.minX)!,
+                                           y: (view?.frame.minY)!,
+                                           width: (view?.frame.width)!,
+                                           height: (view?.frame.height)!))
+            //display settings for the cover along with adding them to view
+            cover?.backgroundColor = UIColor.black
+            cover?.alpha = 0.5
+            cover?.layer.opacity = 0.5
+            cover?.layer.isOpaque = true
+            
+            view?.addSubview (cover!)
+
+            view?.bringSubview (toFront: cover!)
+            self.play ()
+        }
+    }
+    
    /****************              <-depreciated->              ***************/
 //    var capture: AVCaptureSession?
 //    var device: AVCaptureDevice?

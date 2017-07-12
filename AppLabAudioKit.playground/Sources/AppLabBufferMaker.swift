@@ -318,16 +318,30 @@ public class AppLabBufferMaker {
         guard var bufp2 = buffer.floatChannelData?[1] else {
             throw BufferErrors.FloatChannelDataIsNil
         }
+        var count:UInt32 = 0
+        var vol:Float = 0
         for i in 0...envelopePoints.count-2 {
-            let delta = (Int32 (self.buffer.frameLength)/Int32 (envelopePoints.count-1))
-            for j in 0..<delta {
-                let vol = envelopePoints[i] + (envelopePoints[i+1] - envelopePoints[i]) * (Float (j) / Float (delta))
+            let delta = (Int32 (self.buffer.frameLength)/Int32 (envelopePoints.count))
+            for j in 0...delta {
+                vol = envelopePoints[i] + (envelopePoints[i+1] - envelopePoints[i]) * (Float (j) / Float (delta))
                 bufp1.pointee = bufp1.pointee * vol
                 bufp2.pointee = bufp2.pointee * vol
                 bufp1 = bufp1.advanced(by: 1)
                 bufp2 = bufp2.advanced(by: 1)
+                count += 1
             }
         }
+        let start = Float (count)
+        print (start)
+        print (self.buffer.frameLength)
+        while count < self.buffer.frameLength {
+            bufp1.pointee = bufp1.pointee * (vol - vol * ((Float (count) - start) / (start - Float (self.buffer.frameLength))))
+            bufp2.pointee = 0
+            bufp1 = bufp1.advanced(by: 1)
+            bufp2 = bufp2.advanced(by: 1)
+            count += 1
+        }
+        
     }
     
 //enddef AppLabBufferMaker
