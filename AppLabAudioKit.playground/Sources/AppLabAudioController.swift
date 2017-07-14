@@ -434,6 +434,16 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         playButton?.backgroundColor = UIColor.white
         let tp = UITapGestureRecognizer (target: self, action: #selector (self.playfromEnvelope))
         playButton?.addGestureRecognizer(tp)
+        
+        //let gb = UIView (frame:)
+        //let vb = UIView (frame:)
+        //let pb = UIView (frame:)
+        //let tb = UIView (frame:)
+        //let cb = UIView ()
+        //guitar, violin, piano, trombone, clarinet
+        
+        
+        
         view?.addSubview (playButton!)
         view?.bringSubview (toFront: playButton!)
     }
@@ -445,7 +455,9 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         }
         if hasDrawnEnvelope {
             let b = AppLabBufferMaker (fromBuffer: self.buffer!)
-            try! b.mapEnvelope ((self.envelope?.envelope ())!)
+            let env = (self.envelope?.envelope ())!
+            print (env)
+            try! b.mapEnvelope (env)
             self.buffer = b.generate ()
             source = URL (string: "manual")
             if cover == nil && !(self.audioPlayer?.isPlaying)! {
