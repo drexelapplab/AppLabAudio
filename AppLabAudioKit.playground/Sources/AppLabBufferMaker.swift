@@ -332,11 +332,10 @@ public class AppLabBufferMaker {
             }
         }
         let start = Float (count)
-        print (start)
-        print (self.buffer.frameLength)
         while count < self.buffer.frameLength {
-            bufp1.pointee = bufp1.pointee * (vol - vol * ((Float (count) - start) / (start - Float (self.buffer.frameLength))))
-            bufp2.pointee = 0
+            vol = (vol - vol * ((Float (count) - start) / (start - Float (self.buffer.frameLength))))
+            bufp1.pointee = bufp1.pointee * vol
+            bufp2.pointee = bufp2.pointee * vol
             bufp1 = bufp1.advanced(by: 1)
             bufp2 = bufp2.advanced(by: 1)
             count += 1

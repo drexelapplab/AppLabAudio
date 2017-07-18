@@ -351,7 +351,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     }
     
     public func addBuffer (buf: AVAudioPCMBuffer,
-                           withVolume: Float = 0.5,
+                           withVolume: Float = 1.0,
                            atTime: Float = 0.0) throws {
         /*
          this function adds an external buffer to the current buffer. 
