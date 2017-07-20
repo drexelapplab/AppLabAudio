@@ -4,15 +4,21 @@ import PlaygroundSupport
 import AVFoundation
 
 
-let view = UIView (frame: CGRect (x: 0, y: 0, width: 700, height: 450))
+let background = Background (withWidth: 700, andHeight: 400)
+let box = Box (withWidth: 100, andHeight: 100)
+let label = Label (withWidth: 100, andHeight: 50)
+let slider = Slider (withWidth: 200, andHeight: 25)
 
+label.setText (to: "Hello World")
+box.setBackgroundColor(to: UIColor.gray)
+background.place (box, atX: 0, andY: 0)
+background.place (label, atX: 300, andY: 100)
+background.place(slider, atX: 300, andY: 150)
+slider.setBackgroundColor(to: UIColor.white)
 
-let draw = EnvelopeDrawer (frame: CGRect (x: 0, y: 0, width: 700, height: 400))
-view.addSubview (draw)
-let controller = AppLabAudioController (view)
-draw.isUserInteractionEnabled = true
-controller.setEnvelopeDrawer(draw)
-try! controller.setBuffer(buf: AppLabBufferMaker (fromNote: Note (letter:Note.Letter.E, octave: 3) , forTime: 2.0).generate ())
-draw.initPathGenerator ()
-PlaygroundPage.current.liveView = view
-
+let touch = Touch ({
+    print ("success!")
+    print (slider.getSliderValue ())
+})
+box.roundCorners(toRadius: 5)
+box.addTouch (touch)
