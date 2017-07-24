@@ -16,6 +16,10 @@ public class Background {
                                width: e.view.frame.width, height: e.view.frame.height)
         view.addSubview (e.view)
     }
+    
+    public func setColor (to: UIColor) {
+        self.view.backgroundColor = to
+    }
 }
 
 public class UIObject {
@@ -42,16 +46,13 @@ public class Label: UIObject {
         super.init (withWidth: withWidth, andHeight: andHeight)
         view.isUserInteractionEnabled = false
         view.backgroundColor = UIColor.clear
+        label = UILabel (frame: view.frame)
+        view.addSubview(label!)
+        label?.textColor = UIColor.white
     }
     
     public func setText (to: String) {
-        if label != nil {
-            view.willRemoveSubview(label!)
-        }
-        label = UILabel (frame: view.frame)
-        view.addSubview(label!)
         label?.text = to
-        label?.textColor = UIColor.white
     }
     
     public func setFontColor (to: UIColor) {
@@ -70,6 +71,11 @@ public class Box: UIObject {
     
     public func roundCorners (toRadius: Float) {
         self.view.layer.cornerRadius = CGFloat(toRadius)
+    }
+    
+    public func addBorder (ofSize: Float, andColor: UIColor) {
+        self.view.layer.borderWidth = CGFloat (ofSize)
+        self.view.layer.borderColor = andColor.cgColor
     }
 }
 

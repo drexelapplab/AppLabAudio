@@ -96,7 +96,7 @@ public class EnvelopeDrawer: UIImageView {
     public func displayEnvelope (_ env:[Float]) {
         if env.count == points.count {
             self.points = zip (points, env).map ({
-                return CGPoint (x:$0.0.x, y:CGFloat ($0.1))
+                return CGPoint (x:$0.0.x, y:self.frame.height - CGFloat (CGFloat ($0.1) * self.frame.height))
             })
             self.redraw ()
         }

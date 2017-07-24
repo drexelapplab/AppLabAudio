@@ -297,21 +297,26 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         if source == nil {
             print ("no audio loaded")
         } else if (hasPlayed) {
-            if (audioPlayer?.isPlaying)! {
+            if !isPaused {
+                print ("pausing")
                 //pauses the play animation and then the audioplayer
-                let pausedTime: CFTimeInterval = (cover?.layer.convertTime (CACurrentMediaTime (), from: nil))!
-                cover?.layer.speed = 0.0
-                cover?.layer.timeOffset = pausedTime
+                if cover != nil {
+                    let pausedTime: CFTimeInterval = (cover?.layer.convertTime (CACurrentMediaTime (), from: nil))!
+                    cover?.layer.speed = 0.0
+                    cover?.layer.timeOffset = pausedTime
+                }
                 audioPlayer?.pause ()
                 self.isPaused = true
-            } else if isPaused {
+            } else {
                 //resumes the play animation and then the audio player
-                let pausedTime:CFTimeInterval = (cover?.layer.timeOffset)!
-                cover?.layer.speed = 1.0
-                cover?.layer.timeOffset = 0.0
-                cover?.layer.beginTime = 0.0
-                let timeSincePause:CFTimeInterval = (cover?.layer.convertTime (CACurrentMediaTime (), from: nil))! - pausedTime
-                cover?.layer.beginTime = timeSincePause
+                if cover != nil {
+                    let pausedTime:CFTimeInterval = (cover?.layer.timeOffset)!
+                    cover?.layer.speed = 1.0
+                    cover?.layer.timeOffset = 0.0
+                    cover?.layer.beginTime = 0.0
+                    let timeSincePause:CFTimeInterval = (cover?.layer.convertTime (CACurrentMediaTime (), from: nil))! - pausedTime
+                    cover?.layer.beginTime = timeSincePause
+                }
                 self.isPaused = false
                 audioPlayer?.play ()
             }
@@ -332,12 +337,16 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
                 
             }
             //prepare and play the engine and audioplayer
-            
-            //set the buffer to be played
+            print ("<attempting to play>")
             audioPlayer?.prepare (withFrameCount: (buffer?.frameLength)!)
             audioPlayer?.play ()
-            audioPlayer?.scheduleBuffer (buffer!, at: nil, completionHandler: nil)
+            audioPlayer?.scheduleBuffer (buffer!, at: nil, completionHandler: {
+                print ("trigger")
+                self.hasPlayed = false
+                self.audioPlayer?.stop ()
+            })
             hasPlayed = true
+            isPaused = false
         }
     }
     
@@ -422,6 +431,28 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         self.playpause ()
         //
         print ("<playing music>")
+    }
+    
+    public func playBuffer (_ buf: AVAudioPCMBuffer) {
+        if audioPlayer != nil {
+            
+            audioPlayer?.scheduleBuffer(buf, at: nil, options: [], completionHandler: {
+            print ("success")
+            })
+            if !(engine?.isRunning)! {
+                engine?.prepare ()
+                try! engine?.start ()
+                print ("engine started")
+            }
+            if !(audioPlayer?.isPlaying)! {
+                audioPlayer?.play ()
+                print ("is now playing")
+            }
+        }
+        if self.pitchEngine == nil {
+            self.pitchEngine = AppLabPitchEngine ()
+        }
+        self.pitchEngine?.pitch (from: buf, withRate: 44100.0)
     }
     
     public func setEnvelopeDrawer (_ d: EnvelopeDrawer) {

@@ -43,7 +43,7 @@ public class AppLabBufferMaker {
         for i in 0..<Int (buffer.frameLength) {
             // (frequency * i * PI * 2) / framerate
             
-            let t = (displacement + Float (pitch.frequency) * Float(i) * 2 * Float(M_PI)) / sr
+            let t = (displacement + Float (pitch.frequency) * Float(i) * 2 * Float(Double.pi)) / sr
             channel0.pointee = (sinf (t))
             channel0 = channel0.advanced(by: 1)
             channel1.pointee = (sinf (t))
@@ -311,7 +311,7 @@ public class AppLabBufferMaker {
         return self
     }
     
-    func mapEnvelope (_ envelopePoints: [Float]) throws {
+    public func mapEnvelope (_ envelopePoints: [Float]) throws {
         guard var bufp1 = buffer.floatChannelData?[0] else {
             throw BufferErrors.FloatChannelDataIsNil
         }
