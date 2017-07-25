@@ -312,6 +312,7 @@ public class AppLabBufferMaker {
     }
     
     public func mapEnvelope (_ envelopePoints: [Float]) throws {
+        var points = envelopePoints
         guard var bufp1 = buffer.floatChannelData?[0] else {
             throw BufferErrors.FloatChannelDataIsNil
         }
@@ -320,27 +321,30 @@ public class AppLabBufferMaker {
         }
         var count:UInt32 = 0
         var vol:Float = 0
-        for i in 0...envelopePoints.count-2 {
-            let delta = (Int32 (self.buffer.frameLength)/Int32 (envelopePoints.count))
+        points.insert(0, at: 0)
+        points.append(0)
+        for i in 0...points.count-2 {
+            let delta = ((Int32 (Double (self.buffer.frameLength) * 0.8))/Int32 (points.count))
             for j in 0...delta {
-                vol = envelopePoints[i] + (envelopePoints[i+1] - envelopePoints[i]) * (Float (j) / Float (delta))
+                vol = points[i] + (points[i+1] - points[i]) * (Float (j) / Float (delta))
                 bufp1.pointee = bufp1.pointee * vol
                 bufp2.pointee = bufp2.pointee * vol
                 bufp1 = bufp1.advanced(by: 1)
                 bufp2 = bufp2.advanced(by: 1)
                 count += 1
             }
+            print (points[i])
         }
-        let start = Float (count)
+        print (points.last ?? "")
+        print ("\(count):\(self.buffer.frameLength)")
+
         while count < self.buffer.frameLength {
-            vol = (vol - vol * ((Float (count) - start) / (start - Float (self.buffer.frameLength))))
-            bufp1.pointee = bufp1.pointee * vol
-            bufp2.pointee = bufp2.pointee * vol
+            bufp1.pointee = 0
+            bufp2.pointee = 0
             bufp1 = bufp1.advanced(by: 1)
             bufp2 = bufp2.advanced(by: 1)
             count += 1
         }
-        
     }
     
 //enddef AppLabBufferMaker

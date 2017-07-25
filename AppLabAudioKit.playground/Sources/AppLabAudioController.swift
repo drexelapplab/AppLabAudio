@@ -436,18 +436,18 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     public func playBuffer (_ buf: AVAudioPCMBuffer) {
         if audioPlayer != nil {
             
-            audioPlayer?.scheduleBuffer(buf, at: nil, options: [], completionHandler: {
-            print ("success")
-            })
             if !(engine?.isRunning)! {
                 engine?.prepare ()
                 try! engine?.start ()
-                print ("engine started")
             }
             if !(audioPlayer?.isPlaying)! {
                 audioPlayer?.play ()
-                print ("is now playing")
             }
+            audioPlayer?.scheduleBuffer(buf, at: nil, options: [], completionHandler: {
+                //self.audioPlayer?.stop ()
+                //self.engine?.stop ()
+                
+            })
         }
         if self.pitchEngine == nil {
             self.pitchEngine = AppLabPitchEngine ()

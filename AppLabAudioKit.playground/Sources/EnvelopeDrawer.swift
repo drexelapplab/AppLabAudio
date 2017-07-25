@@ -13,8 +13,9 @@ public class EnvelopeDrawer: UIImageView {
     
     public func initPathGenerator () {
         points = (0..<samples).map ({
-            return CGPoint (x: (CGFloat ($0) / CGFloat (samples)) * self.frame.maxX, y: self.frame.midY)
+            return CGPoint (x: (CGFloat ($0) / CGFloat (samples)) * self.frame.width, y: self.frame.height / 2)
         })
+        print ("done")
         self.redraw ()
     }
     
@@ -54,7 +55,7 @@ public class EnvelopeDrawer: UIImageView {
     }
     
     private func changePoint (at: Int, to: CGFloat) {
-        let newy:CGFloat = to > self.frame.maxY ? self.frame.maxY : (to < self.frame.minY ? self.frame.minY : to)
+        let newy:CGFloat = to > self.frame.height ? self.frame.height : (to < 0 ? 0 : to)
         points.insert (CGPoint (x: points[at].x, y: newy), at: at)
         points.remove (at: at+1)
     }
@@ -62,20 +63,20 @@ public class EnvelopeDrawer: UIImageView {
     func redraw () {
         UIGraphicsBeginImageContext (self.frame.size)
         self.image?.draw (in: CGRect (x: 0, y: 0, width: self.frame.size.width, height: self.frame.size.height))
-        
+
         for point in points {
             let path1 = UIBezierPath ()
             path1.lineWidth = 3
-            path1.move(to: CGPoint (x: point.x, y: self.frame.maxY))
-            path1.addLine(to: CGPoint (x: point.x, y: self.frame.minY))
+            path1.move(to: CGPoint (x: point.x, y: self.frame.height))
+            path1.addLine(to: CGPoint (x: point.x, y: 0))
             UIColor.black.set ()
             path1.close ()
             path1.stroke ()
             let path2 = UIBezierPath ()
             path2.lineWidth = 3
-            path2.move (to: CGPoint (x: point.x, y: self.frame.maxY))
+            path2.move (to: CGPoint (x: point.x, y: self.frame.height))
             path2.addLine (to: point)
-            let delta = Float (point.y / self.frame.maxY)
+            let delta = Float (point.y / self.frame.height)
             UIColor (colorLiteralRed: 255.0, green: delta, blue: 0.0,
                      alpha: 2).set ()
             path2.close ()
@@ -90,7 +91,7 @@ public class EnvelopeDrawer: UIImageView {
     }
     
     public func envelope () -> [Float] {
-        return points.map {1.0 - Float ($0.y / self.frame.maxY)}
+        return points.map {1.0 - Float ($0.y / self.frame.height)}
     }
     
     public func displayEnvelope (_ env:[Float]) {
