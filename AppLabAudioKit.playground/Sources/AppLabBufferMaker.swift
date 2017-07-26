@@ -333,9 +333,8 @@ public class AppLabBufferMaker {
                 bufp2 = bufp2.advanced(by: 1)
                 count += 1
             }
-            print (points[i])
+            
         }
-        print (points.last ?? "")
         print ("\(count):\(self.buffer.frameLength)")
 
         while count < self.buffer.frameLength {

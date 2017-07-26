@@ -20,17 +20,17 @@ background.view.addSubview(envelope)
 var start = try! Note (letter: Note.Letter.C, octave: 2)
 
 var notes:[Note] = [
+    try! Note (letter: Note.Letter.E, octave: 1),
+    try! Note (letter: Note.Letter.E, octave: 2),
     try! Note (letter: Note.Letter.E, octave: 3),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2),
-    try! Note (letter: Note.Letter.E, octave: 2)]
+    try! Note (letter: Note.Letter.E, octave: 4),
+    try! Note (letter: Note.Letter.E, octave: 5),
+    try! Note (letter: Note.Letter.A, octave: 1),
+    try! Note (letter: Note.Letter.A, octave: 2),
+    try! Note (letter: Note.Letter.A, octave: 3),
+    try! Note (letter: Note.Letter.A, octave: 4),
+    try! Note (letter: Note.Letter.A, octave: 5),
+    try! Note (letter: Note.Letter.B, octave: 3)]
 
 for i in 0..<11 {
     Keys[i].setBackgroundColor(to: UIColor.white)

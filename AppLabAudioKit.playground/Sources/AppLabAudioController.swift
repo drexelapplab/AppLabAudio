@@ -419,8 +419,12 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         buffer = finbuf
     }
     
-    public func pitchtester () {
-        self.timePitcher?.pitch = 140.0
+    public func pitchtester (pitch: Float) {
+        self.timePitcher?.pitch = pitch
+    }
+    
+    public func setVolume (to: Float) {
+        self.audioPlayer?.volume = to
     }
     
     
@@ -446,7 +450,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
             audioPlayer?.scheduleBuffer(buf, at: nil, options: [], completionHandler: {
                 //self.audioPlayer?.stop ()
                 //self.engine?.stop ()
-                
+                print ("<playback complete>")
             })
         }
         if self.pitchEngine == nil {
