@@ -48,7 +48,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         source = nil
         super.init ()
         do {//setup audio settings
-            try audioSession?.setCategory (AVAudioSessionCategoryPlayAndRecord)
+            try audioSession?.setCategory (AVAudioSessionCategoryPlayAndRecord, with:AVAudioSessionCategoryOptions.defaultToSpeaker)
             try audioSession?.setActive (true)
             //create engine modules
             self.loadEngineModules ()
@@ -81,7 +81,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         source = Bundle.main.url (forResource: audio, withExtension: ".m4a")
         super.init ()
         do {//setup audio settings
-            try audioSession?.setCategory (AVAudioSessionCategoryPlayAndRecord)
+            try audioSession?.setCategory (AVAudioSessionCategoryPlayAndRecord, with:AVAudioSessionCategoryOptions.defaultToSpeaker)
             try audioSession?.setActive (true)
             //create engine modules
             self.loadEngineModules ()
@@ -424,7 +424,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     }
     
     public func setVolume (to: Float) {
-        self.audioPlayer?.volume = to
+        self.engine?.mainMixerNode.volume = to
     }
     
     

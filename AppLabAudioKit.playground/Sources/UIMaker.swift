@@ -58,6 +58,7 @@ public class Label: UIObject {
     public func setFontColor (to: UIColor) {
         label?.textColor = to
     }
+    
 }
 
 public class Box: UIObject {
@@ -76,6 +77,13 @@ public class Box: UIObject {
     public func addBorder (ofSize: Float, andColor: UIColor) {
         self.view.layer.borderWidth = CGFloat (ofSize)
         self.view.layer.borderColor = andColor.cgColor
+    }
+    
+    public func bevel () {
+        self.view.layer.shadowOpacity = 0.6
+        self.view.layer.shadowRadius = 1
+        self.view.layer.shadowOffset = CGSize (width: 1, height: 1)
+        self.view.layer.shadowColor = UIColor.black.cgColor
     }
 }
 

@@ -13,8 +13,9 @@ public class EnvelopeDrawer: UIImageView {
     
     public func initPathGenerator () {
         points = (0..<samples).map ({
-            return CGPoint (x: (CGFloat ($0) / CGFloat (samples)) * self.frame.width, y: self.frame.height / 2)
+            return CGPoint (x: (CGFloat ($0) / CGFloat (samples + 2)) * self.frame.width + 10, y: self.frame.height / 2)
         })
+        self.isUserInteractionEnabled = true
         print ("done")
         self.redraw ()
     }
@@ -24,11 +25,15 @@ public class EnvelopeDrawer: UIImageView {
         lastPoint = touches.first!.location(in: self)
         for i in 0..<points.count {
             if points[i].x > lastPoint.x {
-                let mid = (points[i].x + points[i-1].x)/2
-                if mid < lastPoint.x {
+                if (i == 0) {
                     changePoint (at: i, to: lastPoint.y)
                 } else {
-                    changePoint (at: i-1, to: lastPoint.y)
+                    let mid = (points[i].x + points[i-1].x)/2
+                    if mid < lastPoint.x {
+                        changePoint (at: i, to: lastPoint.y)
+                    } else {
+                        changePoint (at: i-1, to: lastPoint.y)
+                    }
                 }
                 break
             }
@@ -39,7 +44,10 @@ public class EnvelopeDrawer: UIImageView {
         swiped = true
         for touch in touches {
             let currentPoint = touch.location(in: self)
-            for i in 0..<points.count {
+            if currentPoint.x < 0 || currentPoint.x > self.frame.width {
+                return
+            }
+            for i in 1..<points.count {
                 if points[i].x > currentPoint.x {
                     let mid = (points[i].x + points[i-1].x)/2
                     if mid < currentPoint.x {
