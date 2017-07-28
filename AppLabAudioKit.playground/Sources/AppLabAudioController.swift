@@ -24,6 +24,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
     var sampler:AVAudioUnitSampler?
     var distorter:AVAudioUnitDistortion?
     var reverber:AVAudioUnitReverb?
+    var volume:AVAudioUnitEQ?
     var audioPlayer:AVAudioPlayerNode?
     var buffer:AVAudioPCMBuffer?
     var engine:AVAudioEngine?
@@ -59,7 +60,8 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
             engine?.attach (distorter!)
             engine?.attach (reverber!)
             engine?.attach (audioPlayer!)
-            engine?.attach(timePitcher!)
+            engine?.attach (timePitcher!)
+            engine?.attach (volume!)
             //create connects internal to the engine
             self.connectEngineModules ()
             
@@ -92,6 +94,8 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
             engine?.attach (distorter!)
             engine?.attach (reverber!)
             engine?.attach (audioPlayer!)
+            engine?.attach (timePitcher!)
+            engine?.attach (volume!)
             //create connects internal to the engine
             self.connectEngineModules ()
             //attempt to load audio file into buffer
@@ -251,6 +255,7 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         distorter = AVAudioUnitDistortion ()
         reverber = AVAudioUnitReverb ()
         timePitcher = AVAudioUnitTimePitch ()
+        volume = AVAudioUnitEQ ()
         buffer = nil
     }
     
@@ -279,8 +284,10 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         engine?.connect (audioPlayer!, to: reverber!, format: pformat)
         engine?.connect (reverber!, to: node!, fromBus: 0, toBus: 0, format: pformat)
         engine?.connect(audioPlayer!, to: timePitcher!, format: pformat)
-        engine?.connect(timePitcher!, to: (engine?.outputNode)!, format: pformat)
+        //engine?.connect(audioPlayer!, to: volume!, format: pformat)
+        engine?.connect(timePitcher!, to: volume!, format: pformat)
         engine?.connect (distorter!, to: node!, fromBus: 0, toBus: 2, format: format)
+        engine?.connect(volume!, to: (engine?.outputNode)!, format: pformat)
         let dNodes = [AVAudioConnectionPoint (node: (engine?.mainMixerNode)!, bus:1),
                       AVAudioConnectionPoint (node:distorter!, bus:0)]
         engine?.connect (sampler!, to: dNodes, fromBus: 0, format: format)
@@ -419,12 +426,12 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
         buffer = finbuf
     }
     
-    public func pitchtester (pitch: Float) {
-        self.timePitcher?.pitch = pitch
+    public func changePitch (to: Float) {
+        self.timePitcher?.pitch = to
     }
     
     public func setVolume (to: Float) {
-        self.engine?.mainMixerNode.volume = to
+        self.volume?.globalGain = to 
     }
     
     
@@ -514,6 +521,22 @@ public class AppLabAudioController:NSObject, AVAudioRecorderDelegate {
             view?.bringSubview (toFront: cover!)
             self.play ()
         }
+    }
+    
+    public func playOnLoop () {
+        if !(engine?.isRunning)! {
+            engine?.prepare ()
+            try! engine?.start ()
+        }
+        if !(audioPlayer?.isPlaying)! {
+            audioPlayer?.play ()
+        }
+        
+        let bufm = try! AppLabBufferMaker (fromNote: Note (letter: Note.Letter.A, octave: 4), forTime: 10)
+        //try! bufm.mapEnvelope(EnvelopeDrawer.GuitarEnvelope)
+        let buf = try! bufm.transform(attack: 0.01, decay: 0, sustain: 0.99, sustainvol: 1).generate ()
+        self.audioPlayer?.scheduleBuffer (buf, at: nil, options: [.loops], completionHandler: {_ in
+        })
     }
     
    /****************              <-depreciated->              ***************/
